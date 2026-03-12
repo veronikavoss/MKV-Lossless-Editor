@@ -564,7 +564,12 @@ class MainWindow(QMainWindow):
         self.inverse_btn.clicked.connect(self.inverse_segments)
         self.controls_layout.addWidget(self.inverse_btn)
 
-        self.clear_btn = QPushButton("선택 초기화")
+        self.clear_btn = QPushButton()
+        self.clear_btn.setIcon(QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "deselect.svg")))
+        self.clear_btn.setIconSize(QSize(42, 36))
+        self.clear_btn.setFixedSize(42, 36)
+        self.clear_btn.setStyleSheet("background-color: transparent; border: none;")
+        self.clear_btn.setToolTip("선택 초기화")
         self.clear_btn.clicked.connect(self.clear_segments)
         self.controls_layout.addWidget(self.clear_btn)
 
