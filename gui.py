@@ -238,7 +238,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MKV Lossless Editor")
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "icon.png")
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "icon.svg")
         self.setWindowIcon(QIcon(icon_path))
         
         # Apply Dark Mode to Windows Title Bar
@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
         self.layout.addLayout(self.controls_layout)
 
         # Frame Pre Button (1 Frame Back)
-        self.frame_pre_icon = QIcon("assets/frame_pre.png")
+        self.frame_pre_icon = QIcon("assets/frame_pre.svg")
         self.frame_pre_button = QPushButton()
         self.frame_pre_button.setIcon(self.frame_pre_icon)
         self.frame_pre_button.setIconSize(QSize(42, 36))
@@ -410,7 +410,7 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.frame_pre_button)
 
         # Pre Button (5s Back)
-        self.pre_icon = QIcon("assets/pre.png")
+        self.pre_icon = QIcon("assets/pre.svg")
         self.pre_button = QPushButton()
         self.pre_button.setIcon(self.pre_icon)
         self.pre_button.setIconSize(QSize(42, 36))
@@ -422,8 +422,8 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.pre_button)
 
         # Play/Pause Button
-        self.play_icon = QIcon("assets/play.png")
-        self.pause_icon = QIcon("assets/pause.png")
+        self.play_icon = QIcon("assets/play.svg")
+        self.pause_icon = QIcon("assets/pause.svg")
         self.play_button = QPushButton()
         self.play_button.setIcon(self.play_icon)
         self.play_button.setIconSize(QSize(42, 36))
@@ -435,7 +435,7 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.play_button)
 
         # Stop Button
-        self.stop_icon = QIcon("assets/stop.png")
+        self.stop_icon = QIcon("assets/stop.svg")
         self.stop_button = QPushButton()
         self.stop_button.setIcon(self.stop_icon)
         self.stop_button.setIconSize(QSize(42, 36))
@@ -447,7 +447,7 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.stop_button)
 
         # Next Button
-        self.next_icon = QIcon("assets/next.png")
+        self.next_icon = QIcon("assets/next.svg")
         self.next_button = QPushButton()
         self.next_button.setIcon(self.next_icon)
         self.next_button.setIconSize(QSize(42, 36))
@@ -459,7 +459,7 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.next_button)
 
         # Frame Next Button
-        self.frame_next_icon = QIcon("assets/frame_next.png")
+        self.frame_next_icon = QIcon("assets/frame_next.svg")
         self.frame_next_button = QPushButton()
         self.frame_next_button.setIcon(self.frame_next_icon)
         self.frame_next_button.setIconSize(QSize(42, 36))
@@ -471,7 +471,7 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.frame_next_button)
 
         # Open File Button
-        self.open_icon = QIcon("assets/open.png")
+        self.open_icon = QIcon("assets/open.svg")
         self.open_button = QPushButton()
         self.open_button.setIcon(self.open_icon)
         self.open_button.setIconSize(QSize(42, 36))
@@ -486,8 +486,8 @@ class MainWindow(QMainWindow):
         self.controls_layout.addWidget(self.time_label)
         
         # Volume Button & Slider
-        self.volume_icon = QIcon("assets/volume_max.png")
-        self.volume_mute_icon = QIcon("assets/volume_mute.png")
+        self.volume_icon = QIcon("assets/volume_max.svg")
+        self.volume_mute_icon = QIcon("assets/volume_mute.svg")
         self.volume_button = QPushButton()
         self.volume_button.setIcon(self.volume_icon)
         self.volume_button.setIconSize(QSize(24, 24))
@@ -513,7 +513,7 @@ class MainWindow(QMainWindow):
         self.end_time = 0
         self.segments = [] # List of (start, end)
         
-        self.jump_start_icon = QIcon("assets/start_button.png")
+        self.jump_start_icon = QIcon("assets/start_button.svg")
         self.jump_start_btn = QPushButton()
         self.jump_start_btn.setIcon(self.jump_start_icon)
         self.jump_start_btn.setIconSize(QSize(42, 36))
@@ -524,7 +524,7 @@ class MainWindow(QMainWindow):
         self.jump_start_btn.setEnabled(False)
         self.controls_layout.addWidget(self.jump_start_btn)
         
-        self.jump_end_icon = QIcon("assets/end_button.png")
+        self.jump_end_icon = QIcon("assets/end_button.svg")
         self.jump_end_btn = QPushButton()
         self.jump_end_btn.setIcon(self.jump_end_icon)
         self.jump_end_btn.setIconSize(QSize(42, 36))
@@ -535,7 +535,7 @@ class MainWindow(QMainWindow):
         self.jump_end_btn.setEnabled(False)
         self.controls_layout.addWidget(self.jump_end_btn)
 
-        self.start_icon = QIcon("assets/start_point.png")
+        self.start_icon = QIcon("assets/start_point.svg")
         self.set_start_btn = QPushButton()
         self.set_start_btn.setIcon(self.start_icon)
         self.set_start_btn.setIconSize(QSize(42, 36))
@@ -545,7 +545,7 @@ class MainWindow(QMainWindow):
         self.set_start_btn.clicked.connect(self.set_start_mark)
         self.controls_layout.addWidget(self.set_start_btn)
         
-        self.end_icon = QIcon("assets/end_point.png")
+        self.end_icon = QIcon("assets/end_point.svg")
         self.set_end_btn = QPushButton()
         self.set_end_btn.setIcon(self.end_icon)
         self.set_end_btn.setIconSize(QSize(42, 36))

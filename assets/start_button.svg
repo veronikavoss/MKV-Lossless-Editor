@@ -1,0 +1,10 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 144" width="170" height="144">
+	<defs>
+		<image  width="41" height="100" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAABkCAMAAAAseOl2AAAAAXNSR0IB2cksfwAAAHVQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////5YtmQAAAACd0Uk5TABVZncfg9f+eWhgtqf2qNLGyVOps/ml4HfLzHCEfgMD7BGJjTlCnRA5wRQAAAPxJREFUeJzt2E1PwkAUheFzRIQoQVOJYEAwRv//DyIuUIlAEMOHCKJcKUNpitC57u/ZtJM+i27fIaLRbXsWkWNyGn/fPM/IL/zdCX8+EvKcn3uY2+lyGMuAk4MQKMggkiWOUiBQZM/J0jjVhbvohrLCgVdesr2ShYUXAtkJWJun/6RbMf/MelcBgfITGx2VrLSYPVLJ5YK3ryp5TeZUEJibNGnSpEmTJk2aNGnSZELqC0VfPfqSupmp6iz38o/iQ1XevDCQTlimd22vrD262r0ST+1KH5uCvn9PLeigiUiCD62DsNEUxHJV+hnZW/oiydJfv+Xle+f2INz2/AtrR5OG2QJd9QAAAABJRU5ErkJggg=="/>
+	</defs>
+	
+	<g id="폴더 1">
+		<path id="레이어 6" fill="#FFFFFF" d="m89.14 78.95c-3.14-3.84-3.14-10.09 0-13.93l32.13-39.36c2.31-2.83 5.75-3.66 8.76-2.12 3.01 1.54 4.97 5.1 4.97 9.1v78.72c0 3.97-1.96 7.56-4.97 9.1-3.01 1.54-6.45 0.68-8.76-2.12 0 0-32.13-39.36-32.13-39.39z"/>
+		<use id="레이어 4 copy" href="#img1" x="36" y="22"/>
+	</g>
+</svg>

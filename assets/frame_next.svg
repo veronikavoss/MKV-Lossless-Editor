@@ -1,0 +1,10 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 144" width="170" height="144">
+	<defs>
+		<image  width="42" height="100" id="img1" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAABkCAMAAADHT1J1AAAAAXNSR0IB2cksfwAAAHhQTFRFAAAA////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////xqjkrAAAACh0Uk5TAAAVWZ3H4PX/nloYLan9qjSxslTqbP5peB3y8xwhH4DA+wRiY05Qp5BmvOEAAAEYSURBVHic7dhbT8JAFATgGS9IhKipRjFeUCP///+oD+IliEaMgoqgHbduSxOFdnnw7UyabZp8SU/2bQ7hQ/f4IIukJfINyok/a+QIf1Ph12uK6Y91vk9xPqvxszJKRBzMlEBdPaUzYosvBRJY470S52S/ECbZ6CqhDfZK6SZv3A2hPi6VwPJAPMBH8aDpuNUrNtENkMBOm0e4C6KNS1awEETjMY/RCaK7ZDUIugyNGjVq1KhRo0aNGjVq9J9ocN0ZcY4SNUc1O8QwqPCtXLvGGVYj+0k53dNjqYzU+WnHJ7eldP8i7dzbKinSekDW5E+fCut5dAZM9gNstWfK5nmMnLp3bVFTVwlS9sN8H+HKpz5/LShc4sn3N/aomoh3S6VDAAAAAElFTkSuQmCC"/>
+	</defs>
+	
+	<g id="폴더 2">
+		<path id="레이어 6 copy 3" fill="#FFFFFF" d="m132.65 78.95c3.14-3.84 3.14-10.09 0-13.93l-32.13-39.36c-2.31-2.83-5.75-3.66-8.76-2.12-3.02 1.54-4.97 5.1-4.97 9.1v78.72c0 3.97 1.95 7.56 4.97 9.1 3.01 1.54 6.45 0.68 8.76-2.12 0 0 32.13-39.36 32.13-39.39z"/>
+		<use id="레이어 4 copy 2" href="#img1" x="35" y="22"/>
+	</g>
+</svg>
