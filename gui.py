@@ -180,76 +180,93 @@ class SeekSlider(QSlider):
         super().mousePressEvent(event)
 
     def paintEvent(self, event):
+        from PySide6.QtSvg import QSvgRenderer
+        from PySide6.QtCore import QRectF, Qt
+        from PySide6.QtGui import QPainter, QImage, QColor, QPen, QRegion
+        import os
+        
+        # 1. First draw the default QSlider (Track and Handle)
         super().paintEvent(event)
         
-        painter = QPainter(self)
-        
-        # Use style option to get groove geometry
         opt = QStyleOptionSlider()
         self.initStyleOption(opt)
-        gr = self.style().subControlRect(QStyle.ComplexControl.CC_Slider, opt, QStyle.SubControl.SC_SliderGroove, self)
-        
+
         val_range = self.maximum() - self.minimum()
         if val_range <= 0:
             return
 
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Get the rect of the slider handle
+        sr = self.style().subControlRect(QStyle.ComplexControl.CC_Slider, opt, QStyle.SubControl.SC_SliderHandle, self)
+        
+        # Clip out the handle's exact box, so anything drawn under this painter will NOT overwrite the handle!
+        clip_region = QRegion(self.rect()).subtracted(QRegion(sr))
+        painter.setClipRegion(clip_region)
+
+        # 2. Add Groove helper stats
+        gr = self.style().subControlRect(QStyle.ComplexControl.CC_Slider, opt, QStyle.SubControl.SC_SliderGroove, self)
         slider_length = gr.width()
         slider_min_pos = gr.x()
         rect_height = gr.height()
         rect_y = gr.y()
 
-        # Helper to calculate pixel position
         def get_px(val):
             if val < 0: return -1
             ratio = (val - self.minimum()) / val_range
             return slider_min_pos + int(ratio * slider_length)
 
-        # Draw Saved Segments (Gold)
+        # 3. Draw our custom selection segments
+        bar_height = 4
+        bar_y = rect_y + (rect_height - bar_height) // 2
+        
         for start, end in self.segments:
             s_px = get_px(start)
             e_px = get_px(end)
             if s_px >= 0 and e_px > s_px:
-                painter.setBrush(QColor(255, 215, 0, 180)) # Gold for saved segments
-                painter.setPen(Qt.PenStyle.NoPen)
-                painter.drawRect(s_px, rect_y, e_px - s_px, rect_height)
+                painter.setBrush(QColor("#ffd700"))
+                painter.setPen(QPen(QColor("#777777"), 1))
+                painter.drawRoundedRect(s_px, bar_y, e_px - s_px, bar_height, 2, 2)
 
-        # Draw Current Selection (Blue)
         start_px = get_px(self.current_start)
         end_px = get_px(self.current_end)
 
         if start_px >= 0 and end_px > start_px:
-            painter.setBrush(QColor(0, 120, 215, 150)) # Active blue
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawRect(start_px, rect_y, end_px - start_px, rect_height)
+            painter.setBrush(QColor(0, 120, 215, 255))
+            painter.setPen(QPen(QColor("#777777"), 1))
+            painter.drawRoundedRect(start_px, bar_y, end_px - start_px, bar_height, 2, 2)
 
-        # Draw Markers for Current Selection
-        # Start Marker (Green Triangle)
+        # 4. Draw SVGs (Recolored to White)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        def draw_svg_icon(path, x_pos):
+            renderer = QSvgRenderer(path)
+            if renderer.isValid():
+                icon_size = 14
+                img = QImage(icon_size, icon_size, QImage.Format.Format_ARGB32_Premultiplied)
+                img.fill(Qt.GlobalColor.transparent)
+                
+                p2 = QPainter(img)
+                p2.setRenderHint(QPainter.RenderHint.Antialiasing)
+                renderer.render(p2, QRectF(0, 0, icon_size, icon_size))
+                
+                # Composition mode to make it fully white
+                p2.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+                p2.fillRect(img.rect(), Qt.GlobalColor.white)
+                p2.end()
+                
+                # Draw slightly above center
+                target_rect = QRectF(x_pos - icon_size / 2.0, bar_y - icon_size / 2.0 - 5, icon_size, icon_size)
+                painter.drawImage(target_rect, img)
+
         if start_px >= 0:
-            painter.setPen(QPen(QColor(0, 200, 0), 2))
-            painter.drawLine(start_px, rect_y - 2, start_px, rect_y + rect_height + 2)
-            
-            painter.setBrush(QBrush(QColor(0, 200, 0)))
-            painter.setPen(Qt.PenStyle.NoPen)
-            triangle = QPolygon([
-                QPoint(start_px, rect_y - 4),
-                QPoint(start_px + 6, rect_y - 4),
-                QPoint(start_px, rect_y + 2)
-            ])
-            painter.drawPolygon(triangle)
+            draw_svg_icon(os.path.join(base_dir, "assets", "start_check_point.svg"), start_px)
 
-        # End Marker (Red Triangle)
         if end_px >= 0:
-            painter.setPen(QPen(QColor(200, 0, 0), 2))
-            painter.drawLine(end_px, rect_y - 2, end_px, rect_y + rect_height + 2)
-            
-            painter.setBrush(QBrush(QColor(200, 0, 0)))
-            painter.setPen(Qt.PenStyle.NoPen)
-            triangle = QPolygon([
-                QPoint(end_px, rect_y - 4),
-                QPoint(end_px - 6, rect_y - 4),
-                QPoint(end_px, rect_y + 2)
-            ])
-            painter.drawPolygon(triangle)
+            draw_svg_icon(os.path.join(base_dir, "assets", "end_check_point.svg"), end_px)
+
+        painter.end()
 
     def pixelPosToRangeValue(self, pos):
         opt = QStyleOptionSlider()
