@@ -232,7 +232,7 @@ class SegmentItemWidget(QWidget):
         self.btn_delete.setStyleSheet(delete_style)
         self.btn_delete.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.btn_delete.clicked.connect(self.delete_item)
-        
+            
         layout.addWidget(self.btn_delete)
         self.setLayout(layout)
         
@@ -814,6 +814,7 @@ class MainWindow(QMainWindow):
         self.volume_button.setFixedSize(30, 30)
         self.volume_button.setStyleSheet("background-color: transparent; border: none;")
         self.volume_button.setToolTip("음소거 토글")
+        self.volume_button.setProperty("hover_color", "red")
         self.volume_button.clicked.connect(self.toggle_mute)
         self.controls_layout.addWidget(self.volume_button)
         
@@ -840,6 +841,7 @@ class MainWindow(QMainWindow):
         self.set_start_btn.setFixedSize(42, 36)
         self.set_start_btn.setStyleSheet("background-color: transparent; border: none;")
         self.set_start_btn.setToolTip("시작점 [I]")
+        self.set_start_btn.setProperty("hover_color", "gold")
         self.set_start_btn.clicked.connect(self.set_start_mark)
         self.controls_layout.addWidget(self.set_start_btn)
         
@@ -850,6 +852,7 @@ class MainWindow(QMainWindow):
         self.set_end_btn.setFixedSize(42, 36)
         self.set_end_btn.setStyleSheet("background-color: transparent; border: none;")
         self.set_end_btn.setToolTip("끝점 [O]")
+        self.set_end_btn.setProperty("hover_color", "gold")
         self.set_end_btn.clicked.connect(self.set_end_mark)
         self.controls_layout.addWidget(self.set_end_btn)
 
@@ -860,6 +863,7 @@ class MainWindow(QMainWindow):
         self.move_start_point_btn.setFixedSize(42, 36)
         self.move_start_point_btn.setStyleSheet("background-color: transparent; border: none;")
         self.move_start_point_btn.setToolTip("시작점으로 이동")
+        self.move_start_point_btn.setProperty("hover_color", "gold")
         self.move_start_point_btn.clicked.connect(self.jump_to_start)
         self.move_start_point_btn.setEnabled(False)
         self.controls_layout.addWidget(self.move_start_point_btn)
@@ -871,6 +875,7 @@ class MainWindow(QMainWindow):
         self.move_end_point_btn.setFixedSize(42, 36)
         self.move_end_point_btn.setStyleSheet("background-color: transparent; border: none;")
         self.move_end_point_btn.setToolTip("끝점으로 이동")
+        self.move_end_point_btn.setProperty("hover_color", "gold")
         self.move_end_point_btn.clicked.connect(self.jump_to_end)
         self.move_end_point_btn.setEnabled(False)
         self.controls_layout.addWidget(self.move_end_point_btn)
@@ -881,6 +886,7 @@ class MainWindow(QMainWindow):
         self.inverse_btn.setFixedSize(42, 36)
         self.inverse_btn.setStyleSheet("background-color: transparent; border: none;")
         self.inverse_btn.setToolTip("선택 영역 반전")
+        self.inverse_btn.setProperty("hover_color", "gold")
         self.inverse_btn.clicked.connect(self.inverse_segments)
         self.controls_layout.addWidget(self.inverse_btn)
 
@@ -890,6 +896,7 @@ class MainWindow(QMainWindow):
         self.clear_btn.setFixedSize(42, 36)
         self.clear_btn.setStyleSheet("background-color: transparent; border: none;")
         self.clear_btn.setToolTip("선택 초기화")
+        self.clear_btn.setProperty("hover_color", "gold")
         self.clear_btn.clicked.connect(self.clear_segments)
         self.controls_layout.addWidget(self.clear_btn)
 
@@ -1000,6 +1007,43 @@ class MainWindow(QMainWindow):
         self.is_multi_merge_mode = False
         self.multi_merge_files = []
         self.multi_merge_play_idx = -1
+        
+        # Setup Hover Filter Class with QPixmap Colorization
+        class IconColorizeHoverFilter(QObject):
+            def eventFilter(self, obj, event):
+                if event.type() == QEvent.Type.Enter:
+                    current_icon = obj.icon()
+                    if current_icon.isNull():
+                        return super().eventFilter(obj, event)
+                    
+                    obj._icon_normal_backup = current_icon
+                    
+                    size = obj.iconSize()
+                    if size.isEmpty(): size = QSize(42, 36)
+                    
+                    pm = current_icon.pixmap(size)
+                    painter = QPainter(pm)
+                    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+                    
+                    fill_color = obj.property("hover_color")
+                    if not fill_color: fill_color = "skyblue"
+                    
+                    painter.fillRect(pm.rect(), QColor(fill_color))
+                    painter.end()
+                    
+                    obj.setIcon(QIcon(pm))
+                    
+                elif event.type() == QEvent.Type.Leave:
+                    if hasattr(obj, '_icon_normal_backup'):
+                        obj.setIcon(obj._icon_normal_backup)
+                
+                return super().eventFilter(obj, event)
+                
+        self.icon_hover_filter = IconColorizeHoverFilter(self)
+        
+        for child in self.findChildren(QPushButton):
+            if child.styleSheet() and "transparent" in child.styleSheet():
+                child.installEventFilter(self.icon_hover_filter)
         
         # Enable Drag and Drop (Handled by Global Filter in main.py)
         self.setAcceptDrops(True)
@@ -1261,11 +1305,27 @@ class MainWindow(QMainWindow):
         self.audio_output.setMuted(is_muted)
         
         if is_muted:
-            self.volume_button.setIcon(self.volume_mute_icon)
+            size = QSize(24, 24)
+            pm = self.volume_mute_icon.pixmap(size)
+            painter = QPainter(pm)
+            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+            painter.fillRect(pm.rect(), QColor("red"))
+            painter.end()
+            red_mute_icon = QIcon(pm)
+            
+            self.volume_button.setIcon(red_mute_icon)
+            self.volume_button.setProperty("hover_color", "white")
+            if hasattr(self.volume_button, "_icon_normal_backup"):
+                self.volume_button._icon_normal_backup = red_mute_icon
+                
             self.volume_button.setToolTip("음소거 해제")
             self.statusBar().showMessage("음소거 설정됨")
         else:
             self.volume_button.setIcon(self.volume_icon)
+            self.volume_button.setProperty("hover_color", "red")
+            if hasattr(self.volume_button, "_icon_normal_backup"):
+                self.volume_button._icon_normal_backup = self.volume_icon
+                
             self.volume_button.setToolTip("음소거 토글")
             self.statusBar().showMessage("음소거 해제됨")
 
