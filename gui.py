@@ -270,6 +270,7 @@ class ClickableVideoWidget(QVideoWidget):
 
     def mouseDoubleClickEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
+            print(f"[DEBUG] DoubleClick at pos=({event.position().x():.0f}, {event.position().y():.0f})")
             self.doubleClicked.emit()
             event.accept()
         super().mouseDoubleClickEvent(event)
@@ -940,7 +941,7 @@ class MainWindow(QMainWindow):
         
         self.tracks_table = QTableWidget(0, 9)
         self.tracks_table.setHorizontalHeaderLabels([
-            "", "코덱", "유형", "항목 복사", "언어", "이름", "ID", "기본 트랙", "Forced display"
+            "", "유형", "코덱", "항목 복사", "언어", "이름", "ID", "기본 트랙", "Forced display"
         ])
         
         header = self.tracks_table.horizontalHeader()
@@ -950,13 +951,37 @@ class MainWindow(QMainWindow):
         self.tracks_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tracks_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tracks_table.setShowGrid(True)
-        self.tracks_table.setColumnWidth(0, 26) # 최소 넓이로 체크박스만 (26px)
+        self.tracks_table.setShowGrid(True)
+        self.tracks_table.setColumnWidth(0, 24) # 체크박스 중앙 정렬용 적절한 폭
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
         self.tracks_table.verticalHeader().setDefaultSectionSize(24) # 셀 높이 압축
         self.tracks_table.itemChanged.connect(self.check_export_ready)
         
         self.tracks_table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.tracks_table.setStyleSheet("QTableWidget { outline: none; } QTableWidget::item { border: none; padding: 0px; } QTableWidget::item:focus { outline: none; border: none; }")
+        
+        # 동적 흰색 체크박스 SVG 아이콘 생성
+        check_path = os.path.join(os.path.dirname(__file__), "assets/check_white.svg")
+        with open(check_path, "w", encoding="utf-8") as f:
+            f.write('<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13L9 17L19 7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+            
+        self.tracks_table.setStyleSheet(f"""
+            QTableWidget {{ outline: none; }}
+            QTableWidget::item {{ border: none; padding: 0px; }}
+            QTableWidget::item:focus {{ outline: none; border: none; }}
+            QTableWidget::indicator {{
+                width: 13px; height: 13px;
+                background-color: transparent;
+                border: 1px solid white;
+                border-radius: 2px;
+                margin-left: 6px;
+            }}
+            QTableWidget::indicator:checked {{
+                image: url("{check_path.replace(chr(92), '/')}");
+            }}
+            QTableWidget::indicator:hover {{
+                border: 1px solid #aaa;
+            }}
+        """)
         
         # Increase height to show more rows comfortably
         self.tracks_table.setMinimumHeight(140)
@@ -1827,13 +1852,13 @@ class MainWindow(QMainWindow):
             chk_item.setCheckState(Qt.CheckState.Checked)
             self.tracks_table.setItem(row, 0, chk_item)
             
-            # 1: 코덱
-            self.tracks_table.setItem(row, 1, QTableWidgetItem(str(track.get('codec', ''))))
-            
-            # 2: 유형
+            # 1: 유형
             type_str = track.get('type', '')
             lbl = "비디오" if type_str == "video" else "오디오" if type_str == "audio" else "자막" if type_str == "subtitle" else type_str
-            self.tracks_table.setItem(row, 2, QTableWidgetItem(lbl))
+            self.tracks_table.setItem(row, 1, QTableWidgetItem(lbl))
+            
+            # 2: 코덱
+            self.tracks_table.setItem(row, 2, QTableWidgetItem(str(track.get('codec', ''))))
             
             # 3: 항목 복사
             self.tracks_table.setItem(row, 3, QTableWidgetItem("예"))
