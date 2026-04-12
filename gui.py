@@ -4,6 +4,7 @@ import ctypes
 import cv2
 import queue
 import re
+import time
 import subprocess
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                                QHBoxLayout, QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QStyle, QStyleOptionSlider, QListWidget, QListWidgetItem, QAbstractItemView,
@@ -14,7 +15,7 @@ from PySide6.QtCore import Qt, QUrl, QTime, QPoint, Signal, QObject, QEvent, QSi
 
 import video_cutter
 
-from PySide6.QtGui import QPainter, QColor, QPolygon, QPen, QBrush, QIcon, QShortcut, QKeySequence, QPixmap, QImage
+from PySide6.QtGui import QPainter, QColor, QPolygon, QPen, QBrush, QIcon, QShortcut, QKeySequence, QPixmap, QImage, QCursor
 
 class ElidedLabel(QLabel):
     def __init__(self, text, parent=None):
@@ -40,7 +41,7 @@ class ElidedLabel(QLabel):
 
 import threading
 class ThumbnailGrabberThread(QObject):
-    thumbnail_ready = Signal(int, QImage)  # emits (msec, qimage.copy())
+    thumbnail_ready = Signal(int, bytes)  # emits (msec, raw_jpeg_bytes)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -78,8 +79,8 @@ class ThumbnailGrabberThread(QObject):
                 item = self.request_queue.get(timeout=0.1)
                 if not item: continue
                 
-                # Tiny debounce (15ms) to prevent memory & hardware decoder exhaustion
-                time.sleep(0.015)
+                # Increased debounce (150ms) to vastly reduce CPU usage and FFmpeg spam
+                time.sleep(0.150)
                 
                 # Drain queue again to get the absolutely most recent request
                 while not self.request_queue.empty():
@@ -95,7 +96,7 @@ class ThumbnailGrabberThread(QObject):
                 # Fast keyframe extraction using ffmpeg
                 cmd = [
                     "ffmpeg", "-y", "-hide_banner", "-loglevel", "quiet",
-                    "-threads", "4",             # Limit to 4 threads to prevent OOM
+                    "-threads", "2",             # Limit to 2 threads to prevent CPU spikes
                     "-skip_frame", "nokey",      # Only decode keyframes for fast seek!
                     "-ss", f"{time_msec / 1000.0:.3f}",
                     "-i", video_path,
@@ -110,11 +111,8 @@ class ThumbnailGrabberThread(QObject):
                 proc = subprocess.run(cmd, capture_output=True, creationflags=creation_flags)
                 
                 if proc.returncode == 0 and proc.stdout:
-                    qimg = QImage()
-                    qimg.loadFromData(proc.stdout)
-                    
-                    if not qimg.isNull():
-                        self.thumbnail_ready.emit(time_msec, qimg)
+                    # Emit raw bytes to GUI thread safely!
+                    self.thumbnail_ready.emit(time_msec, proc.stdout)
             
             except queue.Empty:
                 continue
@@ -176,11 +174,7 @@ class MergeItemWidget(QWidget):
         super().__init__()
         self.item = item
         self.main_window = main_window
-        self._click_count = 0
-        self._click_timer = QTimer(self)
-        self._click_timer.setSingleShot(True)
-        self._click_timer.setInterval(100)
-        self._click_timer.timeout.connect(self._on_click_timeout)
+        self.main_window = main_window
         
         layout = QHBoxLayout()
         layout.setContentsMargins(5, 3, 5, 3)
@@ -234,30 +228,17 @@ class MergeItemWidget(QWidget):
         self.main_window.delete_queue_item_by_obj(self.item)
         
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self._click_count += 1
-            if self._click_count == 1:
-                self._click_timer.start()
-            elif self._click_count >= 2:
-                self._click_timer.stop()
-                self._click_count = 0
-                self.main_window.play_multi_merge_item(self.item)
-            event.accept()
-        super().mousePressEvent(event)
+        event.ignore()
 
-    def _on_click_timeout(self):
-        self._click_count = 0
+    def mouseDoubleClickEvent(self, event):
+        event.ignore()
 
 class SegmentItemWidget(QWidget):
     def __init__(self, text, item, main_window):
         super().__init__()
         self.item = item
         self.main_window = main_window
-        self._click_count = 0
-        self._click_timer = QTimer(self)
-        self._click_timer.setSingleShot(True)
-        self._click_timer.setInterval(100)
-        self._click_timer.timeout.connect(self._on_click_timeout)
+        self.main_window = main_window
         
         layout = QHBoxLayout()
         layout.setContentsMargins(5, 3, 5, 3)
@@ -287,57 +268,56 @@ class SegmentItemWidget(QWidget):
         self.main_window.delete_segment_by_obj(self.item)
         
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self._click_count += 1
-            if self._click_count == 1:
-                self._click_timer.start()
-            elif self._click_count >= 2:
-                self._click_timer.stop()
-                self._click_count = 0
-                self.main_window.seek_to_segment(self.item)
-            event.accept()
-        super().mousePressEvent(event)
+        event.ignore()
 
-    def _on_click_timeout(self):
-        self._click_count = 0
+    def mouseDoubleClickEvent(self, event):
+        event.ignore()
 
 class ClickableVideoWidget(QVideoWidget):
     """
-    A custom QVideoWidget that emits a clicked signal on mouse press.
-    QVideoWidget의 네이티브 서피스가 mouseDoubleClickEvent를 가로채므로,
-    타이머 기반으로 더블클릭을 직접 감지한다.
+    A custom QVideoWidget that emits a clicked signal on mouse release after the double click interval, 
+    or a doubleClicked signal manually calculated via timing mousePressEvents.
     """
     clicked = Signal()
     doubleClicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._click_count = 0
+        self._last_click_time = 0
         self._click_timer = QTimer(self)
         self._click_timer.setSingleShot(True)
-        self._click_timer.setInterval(100)  # 50ms 이내 두 번 클릭 = 더블클릭
         self._click_timer.timeout.connect(self._on_click_timeout)
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self._click_count += 1
-            if self._click_count == 1:
-                self._click_timer.start()
-            elif self._click_count >= 2:
-                self._click_timer.stop()
-                self._click_count = 0
-                self.doubleClicked.emit()
-            event.accept()
         super().mousePressEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._click_timer.stop() # 이전 클릭 취소 방어
+            
+            current_time = time.time() * 1000
+            interval = QApplication.doubleClickInterval()
+            if current_time - self._last_click_time < interval:
+                print(f"[DEBUG] VideoWidget - Manual Double Click Detected! Diff: {current_time - self._last_click_time}ms")
+                self._last_click_time = 0
+                self.doubleClicked.emit()
+            else:
+                print(f"[DEBUG] VideoWidget - Single Press Detected.")
+                self._last_click_time = current_time
 
-    def _on_click_timeout(self):
-        if self._click_count == 1:
-            self.clicked.emit()
-        self._click_count = 0
+    def mouseReleaseEvent(self, event):
+        super().mouseReleaseEvent(event)
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self._last_click_time != 0:
+                print(f"[DEBUG] VideoWidget - mouseReleaseEvent - Timer Start (250ms)")
+                self._click_timer.start(250)
 
     def mouseDoubleClickEvent(self, event):
-        # 네이티브 서피스에서 가끔 올 수 있으므로 무시
-        event.accept()
+        # 방어벽
+        super().mouseDoubleClickEvent(event)
+
+    def _on_click_timeout(self):
+        print(f"[DEBUG] VideoWidget - _on_click_timeout - Single Click Fired")
+        self.clicked.emit()
+        self._last_click_time = 0
 
 class SeekSlider(QSlider):
     """
@@ -768,10 +748,16 @@ class MainWindow(QMainWindow):
         self.video_widget = ClickableVideoWidget(self.central_widget)
         self.video_widget.setMinimumSize(1344, 756)
         self.video_widget.clicked.connect(self.toggle_play)
-        self.video_widget.doubleClicked.connect(self.toggle_fullscreen)
+        self.video_widget.doubleClicked.connect(self.toggle_maximized)
         self.layout.addWidget(self.video_widget, stretch=1)
         self.media_player.setVideoOutput(self.video_widget)
 
+        # Bottom Panel Container
+        self.bottom_panel = QWidget()
+        self.bottom_panel_layout = QVBoxLayout(self.bottom_panel)
+        self.bottom_panel_layout.setContentsMargins(0, 0, 0, 0)
+        self.bottom_panel_layout.setSpacing(4)
+        
         # Timeline Slider
         self.slider = SeekSlider(Qt.Orientation.Horizontal)
         self.slider.setObjectName("playbackSlider")
@@ -779,7 +765,7 @@ class MainWindow(QMainWindow):
         self.slider.sliderMoved.connect(self.set_position)
         self.slider.sliderPressed.connect(self.slider_pressed)
         self.slider.sliderReleased.connect(self.slider_released)
-        self.layout.addWidget(self.slider)
+        self.bottom_panel_layout.addWidget(self.slider)
 
         # Thumbnail setup
         self.thumbnail_thread = ThumbnailGrabberThread(self)
@@ -793,7 +779,7 @@ class MainWindow(QMainWindow):
 
         # Time Labels and Controls Layout
         self.controls_layout = QHBoxLayout()
-        self.layout.addLayout(self.controls_layout)
+        self.bottom_panel_layout.addLayout(self.controls_layout)
 
         # Pre Frame Button (1 Frame Back)
         self.pre_frame_icon = QIcon("assets/pre_frame.svg")
@@ -997,12 +983,12 @@ class MainWindow(QMainWindow):
         self.separator.setFrameShape(QFrame.Shape.HLine)
         self.separator.setFrameShadow(QFrame.Shadow.Sunken)
         self.separator.setStyleSheet("background-color: #3d3d3d;")
-        self.layout.addWidget(self.separator)
+        self.bottom_panel_layout.addWidget(self.separator)
 
         # Tracks Table Widget
         self.tracks_label = QLabel("트랙, 챕터와 태그")
         self.tracks_label.setStyleSheet("color: gold; font-weight: bold; margin-top: 4px; margin-bottom: 4px;")
-        self.layout.addWidget(self.tracks_label)
+        self.bottom_panel_layout.addWidget(self.tracks_label)
         
         self.tracks_table = QTableWidget(0, 9)
         self.tracks_table.setHorizontalHeaderLabels([
@@ -1057,7 +1043,7 @@ class MainWindow(QMainWindow):
                 background-color: transparent;
                 border: 1px solid white;
                 border-radius: 2px;
-                margin-left: 6px;
+                margin-left: 7px;
             }}
             QTableWidget::indicator:checked {{
                 image: url("{check_path.replace(chr(92), '/')}");
@@ -1089,18 +1075,18 @@ class MainWindow(QMainWindow):
         # Increase height to show more rows comfortably
         self.tracks_table.setMinimumHeight(140)
         self.tracks_table.setMaximumHeight(200)
-        self.layout.addWidget(self.tracks_table)
+        self.bottom_panel_layout.addWidget(self.tracks_table)
 
         # Add Horizontal Line Separator 2
         self.separator2 = QFrame()
         self.separator2.setFrameShape(QFrame.Shape.HLine)
         self.separator2.setFrameShadow(QFrame.Shadow.Sunken)
         self.separator2.setStyleSheet("background-color: #3d3d3d; margin-top: 4px; margin-bottom: 4px;")
-        self.layout.addWidget(self.separator2)
+        self.bottom_panel_layout.addWidget(self.separator2)
 
         # Bottom Lists Layout (Horizontal Split)
         self.bottom_lists_layout = QHBoxLayout()
-        self.layout.addLayout(self.bottom_lists_layout)
+        self.bottom_panel_layout.addLayout(self.bottom_lists_layout)
 
         # --- Left: Segments List Widget ---
         self.segments_layout = QVBoxLayout()
@@ -1138,7 +1124,14 @@ class MainWindow(QMainWindow):
         self.merge_queue_layout.addWidget(self.merge_queue_list)
         self.bottom_lists_layout.addLayout(self.merge_queue_layout)
         
+        # Add the entire bottom panel to the main layout
+        self.layout.addWidget(self.bottom_panel)
+        
+        
         self.setup_shortcuts()
+        
+        self._is_true_fullscreen = False
+        QApplication.instance().installEventFilter(self)
 
         # Signals
         self.media_player.positionChanged.connect(self.position_changed)
@@ -1236,10 +1229,14 @@ class MainWindow(QMainWindow):
         if self.file_path:
             self.thumbnail_thread.request_thumbnail(self.file_path, time_msec)
 
-    def on_thumbnail_ready(self, time_msec, qimg):
+    def on_thumbnail_ready(self, time_msec, img_data):
         if not hasattr(self, 'thumbnail_tooltip') or not self.thumbnail_tooltip.isVisible():
             return
-        if not qimg.isNull():
+            
+        qimg = QImage()
+        loaded = qimg.loadFromData(img_data)
+        
+        if loaded and not qimg.isNull():
             pixmap = QPixmap.fromImage(qimg).scaled(288, 162, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.thumbnail_tooltip.img_label.setPixmap(pixmap)
 
@@ -1268,8 +1265,32 @@ class MainWindow(QMainWindow):
         add_shortcut(Qt.Key.Key_Period, self.jump_to_end)
         add_shortcut(Qt.Key.Key_Space, self.toggle_play)
         add_shortcut(Qt.Key.Key_Escape, self.stop_playback)
-        add_shortcut(Qt.Key.Key_Return, self.toggle_fullscreen)
-        add_shortcut(Qt.Key.Key_Enter, self.toggle_fullscreen)
+        
+        alt_enter = QShortcut(QKeySequence("Alt+Return"), self)
+        alt_enter.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        alt_enter.activated.connect(self.toggle_true_fullscreen)
+        
+        alt_enter2 = QShortcut(QKeySequence("Alt+Enter"), self)
+        alt_enter2.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        alt_enter2.activated.connect(self.toggle_true_fullscreen)
+
+    def eventFilter(self, obj, event):
+        if self._is_true_fullscreen and event.type() == QEvent.Type.MouseMove:
+            if hasattr(event, "globalPosition"):
+                y = event.globalPosition().y()
+            else:
+                y = event.globalPos().y() if hasattr(event, "globalPos") else QCursor.pos().y()
+                
+            screen = QApplication.primaryScreen()
+            if screen:
+                screen_h = screen.geometry().height()
+                if y > screen_h * 0.80:
+                    if self.bottom_panel.isHidden():
+                        self.bottom_panel.show()
+                else:
+                    if not self.bottom_panel.isHidden():
+                        self.bottom_panel.hide()
+        return super().eventFilter(obj, event)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -1285,13 +1306,28 @@ class MainWindow(QMainWindow):
             window_geometry.moveCenter(screen_geometry.center())
             self.move(window_geometry.topLeft())
 
-    def toggle_fullscreen(self):
-        if self.isMaximized() or self.isFullScreen():
+    def toggle_maximized(self):
+        if self.isMaximized():
             self.showNormal()
             self.statusBar().showMessage("기본 화면으로 복귀")
         else:
             self.showMaximized()
-            self.statusBar().showMessage("최대화 모드")
+            self.statusBar().showMessage("최대화 모드 (더블클릭)")
+
+    def toggle_true_fullscreen(self):
+        if self.isFullScreen():
+            self._is_true_fullscreen = False
+            self.bottom_panel.show()
+            self.showNormal()
+            self.statusBar().show()
+            if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
+            self.statusBar().showMessage("기본 화면으로 복귀")
+        else:
+            self._is_true_fullscreen = True
+            self.bottom_panel.hide()
+            self.showFullScreen()
+            self.statusBar().hide()
+            if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
 
     def handle_dropped_files(self, file_paths):
         valid_extensions = ['.mkv', '.mp4', '.avi']
