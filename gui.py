@@ -1118,8 +1118,7 @@ class MainWindow(QMainWindow):
         """)
         
         # Increase height to show more rows comfortably
-        self.tracks_table.setMinimumHeight(140)
-        self.tracks_table.setMaximumHeight(200)
+        self.tracks_table.setFixedHeight(140)
         self.bottom_panel_layout.addWidget(self.tracks_table)
 
         # Add Horizontal Line Separator 2
