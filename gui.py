@@ -1457,6 +1457,7 @@ class MainWindow(QMainWindow):
             self.layout.setContentsMargins(9, 9, 9, 9)
             self.bottom_panel.show()
             self.showNormal()
+            self.statusBar().setMaximumHeight(16777215) # Restore height
             self.statusBar().show()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
             self.statusBar().showMessage("기본 화면으로 복귀")
@@ -1470,8 +1471,9 @@ class MainWindow(QMainWindow):
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: black; }")
             self.layout.setContentsMargins(0, 0, 0, 0)
             self.bottom_panel.hide()
-            self.showFullScreen()
             self.statusBar().hide()
+            self.statusBar().setMaximumHeight(0) # Absolutely prevent visible rendering
+            self.showFullScreen()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
             if hasattr(self, 'btn_fullscreen'):
                 self.btn_fullscreen.setStyleSheet(f"QPushButton {{ background: transparent; border: none; border-image: url({assets_dir}/defalt_screen.svg); }} QPushButton:hover {{ border-image: url({assets_dir}/defalt_screen_hover.svg); }}")
