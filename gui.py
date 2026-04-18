@@ -1717,7 +1717,34 @@ class MainWindow(QMainWindow):
 
     def show_context_menu(self, pos):
         menu = QMenu(self)
-        menu.setStyleSheet("QMenu { background-color: #2b2b2b; color: white; border: 1px solid #444; } QMenu::item:selected { background-color: #0078d7; }")
+        menu.setWindowFlags(menu.windowFlags() | Qt.WindowType.FramelessWindowHint | Qt.WindowType.NoDropShadowWindowHint)
+        menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        menu.setStyleSheet("""
+            QMenu {
+                background-color: rgba(30, 30, 30, 240);
+                color: #e0e0e0;
+                border: 1px solid #555555;
+                border-radius: 8px;
+                padding: 8px 0px;
+                font-family: 'Segoe UI', sans-serif;
+                font-size: 14px;
+            }
+            QMenu::item {
+                padding: 8px 36px 8px 24px;
+                margin: 2px 8px;
+                border-radius: 4px;
+                background-color: transparent;
+            }
+            QMenu::item:selected {
+                background-color: rgba(255, 255, 255, 25);
+                color: #ffffff;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: #444444;
+                margin: 6px 16px;
+            }
+        """)
 
         act_open = menu.addAction("파일 열기... (Ctrl+O)")
         act_open.triggered.connect(self.open_file)
