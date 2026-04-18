@@ -1352,18 +1352,20 @@ class MainWindow(QMainWindow):
             if screen:
                 screen_h = screen.geometry().height()
                 if self.bottom_panel.isHidden() and self._is_true_fullscreen:
-                    # 패널이 숨어있을 때는 바탕화면 하단 10% 이하로 내려가면 나타나게 트리거
                     if y > screen_h * 0.90:
                         self.bottom_panel.show()
+                        self.central_widget.updateGeometry()
+                        self.update()
                         
                 elif not self.bottom_panel.isHidden() and self._is_true_fullscreen:
-                    # 패널이 나타나있을 때는 마우스가 폼/패널 영역 안에 있는지 확인
                     top_left = self.bottom_panel.mapToGlobal(QPoint(0, 0))
                     from PySide6.QtCore import QRect
                     panel_rect = QRect(top_left, self.bottom_panel.size())
                     
                     if not panel_rect.contains(global_pos):
                         self.bottom_panel.hide()
+                        self.central_widget.updateGeometry()
+                        self.update()
                         
         return super().eventFilter(obj, event)
 
@@ -1397,6 +1399,7 @@ class MainWindow(QMainWindow):
         assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets").replace("\\", "/")
         if self._is_true_fullscreen:
             self._is_true_fullscreen = False
+            self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             self.layout.setContentsMargins(9, 9, 9, 9)
             self.bottom_panel.show()
             self.showNormal()
@@ -1405,6 +1408,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("기본 화면으로 복귀")
             if hasattr(self, 'btn_fullscreen'):
                 self.btn_fullscreen.setStyleSheet(f"QPushButton {{ background: transparent; border: none; border-image: url({assets_dir}/full_screen.svg); }} QPushButton:hover {{ border-image: url({assets_dir}/full_screen_hover.svg); }}")
+            self.central_widget.updateGeometry()
+            self.update()
         else:
             self.toggle_maximized()
 
@@ -1413,6 +1418,7 @@ class MainWindow(QMainWindow):
         
         if self._is_true_fullscreen:
             self._is_true_fullscreen = False
+            self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             self.layout.setContentsMargins(9, 9, 9, 9)
             self.bottom_panel.show()
             self.showMaximized()
@@ -1421,6 +1427,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("최대화 모드")
             if hasattr(self, 'btn_fullscreen'):
                 self.btn_fullscreen.setStyleSheet(f"QPushButton {{ background: transparent; border: none; border-image: url({assets_dir}/full_screen.svg); }} QPushButton:hover {{ border-image: url({assets_dir}/full_screen_hover.svg); }}")
+            self.central_widget.updateGeometry()
+            self.update()
             return
 
         if self.isMaximized():
@@ -1438,7 +1446,7 @@ class MainWindow(QMainWindow):
         assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets").replace("\\", "/")
         if self.isFullScreen():
             self._is_true_fullscreen = False
-            self.central_widget.setStyleSheet("")
+            self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             self.layout.setContentsMargins(9, 9, 9, 9)
             self.bottom_panel.show()
             self.showNormal()
@@ -1447,6 +1455,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("기본 화면으로 복귀")
             if hasattr(self, 'btn_fullscreen'):
                 self.btn_fullscreen.setStyleSheet(f"QPushButton {{ background: transparent; border: none; border-image: url({assets_dir}/full_screen.svg); }} QPushButton:hover {{ border-image: url({assets_dir}/full_screen_hover.svg); }}")
+            self.central_widget.updateGeometry()
+            self.update()
         else:
             self._is_true_fullscreen = True
             self.central_widget.setObjectName("centralWidget")
@@ -1458,6 +1468,8 @@ class MainWindow(QMainWindow):
             if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
             if hasattr(self, 'btn_fullscreen'):
                 self.btn_fullscreen.setStyleSheet(f"QPushButton {{ background: transparent; border: none; border-image: url({assets_dir}/defalt_screen.svg); }} QPushButton:hover {{ border-image: url({assets_dir}/defalt_screen_hover.svg); }}")
+            self.central_widget.updateGeometry()
+            self.update()
 
     def handle_dropped_files(self, file_paths):
         valid_extensions = ['.mkv', '.mp4', '.avi']
