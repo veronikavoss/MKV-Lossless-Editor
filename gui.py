@@ -8,7 +8,7 @@ import time
 import subprocess
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                                QHBoxLayout, QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QStyle, QStyleOptionSlider, QListWidget, QListWidgetItem, QAbstractItemView,
-                               QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QComboBox, QFrame, QProgressDialog)
+                               QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QComboBox, QFrame, QProgressDialog, QMenu)
 import mpv
 from PySide6.QtCore import Qt, QUrl, QTime, QPoint, Signal, QObject, QEvent, QSize, QTimer, QThread
 
@@ -773,6 +773,8 @@ class MainWindow(QMainWindow):
         self.video_widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.video_widget.clicked.connect(self.toggle_play)
         self.video_widget.doubleClicked.connect(self.handle_video_double_click)
+        self.video_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.video_widget.customContextMenuRequested.connect(self.show_context_menu)
         self.layout.addWidget(self.video_widget, stretch=1)
 
         # Initialize MPV with hardware-accelerated GPU rendering
@@ -800,6 +802,16 @@ class MainWindow(QMainWindow):
         self.bottom_panel_layout = QVBoxLayout(self.bottom_panel)
         self.bottom_panel_layout.setContentsMargins(0, 0, 0, 0)
         self.bottom_panel_layout.setSpacing(4)
+        
+        # Top Panel Container (for fullscreen)
+        self.top_panel = QWidget(self.central_widget)
+        self.top_panel.setStyleSheet("background-color: rgba(0, 0, 0, 180);")
+        self.top_panel.hide()
+        self.top_panel_layout = QHBoxLayout(self.top_panel)
+        self.top_panel_layout.setContentsMargins(15, 10, 15, 10)
+        self.top_title_label = QLabel("")
+        self.top_title_label.setStyleSheet("color: white; font-size: 16px; font-weight: bold; background: transparent;")
+        self.top_panel_layout.addWidget(self.top_title_label)
         
         # Timeline Slider
         self.slider = SeekSlider(Qt.Orientation.Horizontal)
@@ -1349,19 +1361,40 @@ class MainWindow(QMainWindow):
             screen = QApplication.primaryScreen()
             if screen:
                 screen_h = screen.geometry().height()
-                if self.bottom_panel.isHidden():
+                if self.bottom_panel.isHidden() and self._is_true_fullscreen:
                     # 패널이 숨어있을 때는 바탕화면 하단 10% 이하로 내려가면 나타나게 트리거
                     if y > screen_h * 0.90:
                         self.bottom_panel.show()
-                else:
-                    # 패널이 나타나있을 때는 마우스가 패널의 물리적 사각형 영역(rect) 안에 있는지 확인
+                        
+                    # Top Panel 오토 하이드 로직 (상단 80px 이내)
+                    if y < 80:
+                        self.top_panel.show()
+                        self.top_panel.raise_()
+                    else:
+                        self.top_panel.hide()
+                        
+                elif not self.bottom_panel.isHidden() and self._is_true_fullscreen:
+                    # 패널이 나타나있을 때는 마우스가 폼/패널 영역 안에 있는지 확인
                     top_left = self.bottom_panel.mapToGlobal(QPoint(0, 0))
                     from PySide6.QtCore import QRect
                     panel_rect = QRect(top_left, self.bottom_panel.size())
                     
                     if not panel_rect.contains(global_pos):
                         self.bottom_panel.hide()
+                        
+                    # Top Panel 오토 하이드 로직 연계
+                    if y < 80:
+                        self.top_panel.show()
+                        self.top_panel.raise_()
+                    else:
+                        self.top_panel.hide()
+                        
         return super().eventFilter(obj, event)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, 'top_panel'):
+            self.top_panel.setGeometry(0, 0, self.width(), 50)
     def changeEvent(self, event):
         if event.type() == QEvent.Type.WindowStateChange:
             assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets").replace("\\", "/")
@@ -1433,6 +1466,7 @@ class MainWindow(QMainWindow):
             self._is_true_fullscreen = False
             self.layout.setContentsMargins(9, 9, 9, 9)
             self.bottom_panel.show()
+            self.top_panel.hide()
             self.showNormal()
             self.statusBar().show()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
@@ -1443,6 +1477,7 @@ class MainWindow(QMainWindow):
             self._is_true_fullscreen = True
             self.layout.setContentsMargins(0, 0, 0, 0)
             self.bottom_panel.hide()
+            self.top_panel.hide()
             self.showFullScreen()
             self.statusBar().hide()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
@@ -1518,6 +1553,7 @@ class MainWindow(QMainWindow):
             self.player.play(file_path)
             self.play_video()
             self.merge_queue_list.setCurrentRow(index)
+            self.top_title_label.setText(os.path.basename(file_path))
             self.setWindowTitle(f"MKV Lossless Cutter - 다중 파일 미리보기 ({index+1}/{len(self.multi_merge_files)})")
 
     def play_multi_merge_item(self, item):
@@ -1532,6 +1568,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'thumbnail_tooltip') and self.thumbnail_tooltip:
             self.thumbnail_tooltip.img_label.clear()
             
+        self.top_title_label.setText(os.path.basename(self.file_path))
         self.player.play(self.file_path)
         self.play_button.setEnabled(True)
         self.stop_button.setEnabled(True)
@@ -1667,6 +1704,48 @@ class MainWindow(QMainWindow):
             self.player.pause = True
         except:
             pass
+
+    def toggle_subtitles(self):
+        if not hasattr(self, 'player'): return
+        try:
+            current_vis = getattr(self.player, 'sub_visibility', True)
+            self.player.sub_visibility = not current_vis
+            state_str = "보이기" if not current_vis else "끄기"
+            self.statusBar().showMessage(f"자막 {state_str}")
+        except:
+            pass
+
+    def show_context_menu(self, pos):
+        menu = QMenu(self)
+        menu.setStyleSheet("QMenu { background-color: #2b2b2b; color: white; border: 1px solid #444; } QMenu::item:selected { background-color: #0078d7; }")
+
+        act_open = menu.addAction("파일 열기... (Ctrl+O)")
+        act_open.triggered.connect(self.open_file)
+        menu.addSeparator()
+
+        act_play = menu.addAction("재생 / 일시정지 (Space)")
+        act_play.triggered.connect(self.toggle_play)
+
+        act_stop = menu.addAction("정지 (S)")
+        act_stop.triggered.connect(self.stop_playback)
+        menu.addSeparator()
+
+        act_mute = menu.addAction("음소거 토글 (M)")
+        act_mute.triggered.connect(self.toggle_mute)
+
+        act_sub = menu.addAction("자막 보이기 / 끄기")
+        act_sub.triggered.connect(self.toggle_subtitles)
+        menu.addSeparator()
+
+        act_full = menu.addAction("전체 화면 (Alt+Enter)")
+        act_full.triggered.connect(self.toggle_fullscreen)
+        menu.addSeparator()
+
+        act_exit = menu.addAction("종료 (Esc)")
+        act_exit.triggered.connect(self.close)
+
+        global_pos = self.video_widget.mapToGlobal(pos)
+        menu.exec(global_pos)
 
     def toggle_mute(self):
         try:
