@@ -1549,7 +1549,6 @@ class MainWindow(QMainWindow):
             self.player.play(file_path)
             self.play_video()
             self.merge_queue_list.setCurrentRow(index)
-            self.top_title_label.setText(os.path.basename(file_path))
             self.setWindowTitle(f"MKV Lossless Cutter - 다중 파일 미리보기 ({index+1}/{len(self.multi_merge_files)})")
 
     def play_multi_merge_item(self, item):
@@ -1564,7 +1563,6 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'thumbnail_tooltip') and self.thumbnail_tooltip:
             self.thumbnail_tooltip.img_label.clear()
             
-        self.top_title_label.setText(os.path.basename(self.file_path))
         self.player.play(self.file_path)
         self.play_button.setEnabled(True)
         self.stop_button.setEnabled(True)
