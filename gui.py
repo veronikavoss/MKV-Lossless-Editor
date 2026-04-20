@@ -1206,23 +1206,12 @@ class MainWindow(QMainWindow):
         # Add the entire bottom panel to the main layout
         self.layout.addWidget(self.bottom_panel)
         
-        # Override statusBar().showMessage to prevent auto-unhiding during true fullscreen
-        self._original_show_message = self.statusBar().showMessage
-        def _custom_show_message(message, timeout=0):
-            if getattr(self, '_is_true_fullscreen', False) and self.statusBar().isHidden():
-                return
-            self._original_show_message(message, timeout)
-        self.statusBar().showMessage = _custom_show_message
-        
-        self.setup_shortcuts()
-        
-        self._is_true_fullscreen = False
-        QApplication.instance().installEventFilter(self)
+        # StatusBar Override: move inside bottom_panel to prevent QMainWindow gray artifacts
+        self.setStatusBar(None)
+        self.custom_status_bar = QStatusBar(self.bottom_panel)
+        self.bottom_panel_layout.addWidget(self.custom_status_bar)
+        self.statusBar = lambda: self.custom_status_bar
 
-        # Signals
-        # MPV uses timer-based polling (_mpv_poll) instead of Qt signals
-
-        # Status Bar
         self.statusBar().showMessage("준비 완료")
         self.statusBar().setStyleSheet("color: #cccccc; font-size: 12px;")
         self.statusBar().setMinimumHeight(28)
@@ -1387,8 +1376,6 @@ class MainWindow(QMainWindow):
                 if self.bottom_panel.isHidden() and self._is_true_fullscreen:
                     if y > screen_h * 0.90:
                         self.bottom_panel.show()
-                        self.statusBar().setMaximumHeight(16777215)
-                        self.statusBar().show()
                         self.central_widget.updateGeometry()
                         self.update()
                         
@@ -1398,16 +1385,9 @@ class MainWindow(QMainWindow):
                     panel_rect = QRect(top_left, self.bottom_panel.size())
                     
                     if not panel_rect.contains(global_pos):
-                        y_pos = global_pos.y()
-                        # Allow tolerance for statusBar height if mouse is at the very bottom
-                        if y_pos > top_left.y() + panel_rect.height() - 5: 
-                            pass # cursor is possibly over the status bar beneath bottom panel
-                        else:
-                            self.bottom_panel.hide()
-                            self.statusBar().hide()
-                            self.statusBar().setMaximumHeight(0)
-                            self.central_widget.updateGeometry()
-                            self.update()
+                        self.bottom_panel.hide()
+                        self.central_widget.updateGeometry()
+                        self.update()
 
                 # --- Top Panel ---
                 if self.top_panel.isHidden() and self._is_true_fullscreen:
@@ -1456,6 +1436,7 @@ class MainWindow(QMainWindow):
         assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets").replace("\\", "/")
         if self._is_true_fullscreen:
             self._is_true_fullscreen = False
+            self.setStyleSheet("")
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             if hasattr(self, '_normal_margins'):
                 self.layout.setContentsMargins(self._normal_margins)
@@ -1463,8 +1444,6 @@ class MainWindow(QMainWindow):
                 self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.showNormal()
-            self.statusBar().setMaximumHeight(16777215) # Restore height
-            self.statusBar().show()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
             self.statusBar().showMessage("기본 화면으로 복귀")
             if hasattr(self, 'btn_fullscreen'):
@@ -1486,8 +1465,6 @@ class MainWindow(QMainWindow):
                 self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.showMaximized()
-            self.statusBar().setMaximumHeight(16777215) # Restore height
-            self.statusBar().show()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
             self.statusBar().showMessage("최대화 모드")
             if hasattr(self, 'btn_fullscreen'):
@@ -1511,6 +1488,7 @@ class MainWindow(QMainWindow):
         assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets").replace("\\", "/")
         if self.isFullScreen():
             self._is_true_fullscreen = False
+            self.setStyleSheet("")
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             if hasattr(self, '_normal_margins'):
                 self.layout.setContentsMargins(self._normal_margins)
@@ -1529,6 +1507,7 @@ class MainWindow(QMainWindow):
             self.update()
         else:
             self._is_true_fullscreen = True
+            self.setStyleSheet("QMainWindow { background-color: black; }")
             self.central_widget.setObjectName("centralWidget")
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: black; }")
             
@@ -1551,8 +1530,6 @@ class MainWindow(QMainWindow):
             
             self.bottom_panel.hide()
             self.top_panel.hide()
-            self.statusBar().hide()
-            self.statusBar().setMaximumHeight(0) # Absolutely prevent visible rendering
             self.showFullScreen()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
             if hasattr(self, 'btn_fullscreen'):
