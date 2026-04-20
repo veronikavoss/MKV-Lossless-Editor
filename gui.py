@@ -1456,7 +1456,10 @@ class MainWindow(QMainWindow):
         if self._is_true_fullscreen:
             self._is_true_fullscreen = False
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
-            self.layout.setContentsMargins(9, 9, 9, 9)
+            if hasattr(self, '_normal_margins'):
+                self.layout.setContentsMargins(self._normal_margins)
+            if hasattr(self, '_normal_bottom_margins'):
+                self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.showMaximized()
             self.statusBar().show()
