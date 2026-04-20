@@ -1209,7 +1209,7 @@ class MainWindow(QMainWindow):
         # Override statusBar().showMessage to prevent auto-unhiding during true fullscreen
         self._original_show_message = self.statusBar().showMessage
         def _custom_show_message(message, timeout=0):
-            if getattr(self, '_is_true_fullscreen', False):
+            if getattr(self, '_is_true_fullscreen', False) and self.statusBar().isHidden():
                 return
             self._original_show_message(message, timeout)
         self.statusBar().showMessage = _custom_show_message
@@ -1224,7 +1224,8 @@ class MainWindow(QMainWindow):
 
         # Status Bar
         self.statusBar().showMessage("준비 완료")
-        self.statusBar().setStyleSheet("color: #cccccc;")
+        self.statusBar().setStyleSheet("color: #cccccc; font-size: 13px;")
+        self.statusBar().setMinimumHeight(28)
 
         self.file_path = ""
         self.is_slider_pressed = False
@@ -1373,6 +1374,7 @@ class MainWindow(QMainWindow):
                 if self.bottom_panel.isHidden() and self._is_true_fullscreen:
                     if y > screen_h * 0.90:
                         self.bottom_panel.show()
+                        self.statusBar().show()
                         self.central_widget.updateGeometry()
                         self.update()
                         
@@ -1382,9 +1384,15 @@ class MainWindow(QMainWindow):
                     panel_rect = QRect(top_left, self.bottom_panel.size())
                     
                     if not panel_rect.contains(global_pos):
-                        self.bottom_panel.hide()
-                        self.central_widget.updateGeometry()
-                        self.update()
+                        y_pos = global_pos.y()
+                        # Allow tolerance for statusBar height if mouse is at the very bottom
+                        if y_pos > top_left.y() + panel_rect.height() - 5: 
+                            pass # cursor is possibly over the status bar beneath bottom panel
+                        else:
+                            self.bottom_panel.hide()
+                            self.statusBar().hide()
+                            self.central_widget.updateGeometry()
+                            self.update()
 
                 # --- Top Panel ---
                 if self.top_panel.isHidden() and self._is_true_fullscreen:
@@ -1440,6 +1448,7 @@ class MainWindow(QMainWindow):
                 self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.showNormal()
+            self.statusBar().setMaximumHeight(16777215) # Restore height
             self.statusBar().show()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
             self.statusBar().showMessage("기본 화면으로 복귀")
@@ -1462,6 +1471,7 @@ class MainWindow(QMainWindow):
                 self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.showMaximized()
+            self.statusBar().setMaximumHeight(16777215) # Restore height
             self.statusBar().show()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.show()
             self.statusBar().showMessage("최대화 모드")
@@ -1524,7 +1534,7 @@ class MainWindow(QMainWindow):
             self.bottom_panel.hide()
             self.top_panel.hide()
             self.statusBar().hide()
-            self.statusBar().setMaximumHeight(0) # Absolutely prevent visible rendering
+            # self.statusBar().setMaximumHeight(0) # Absolutely prevent visible rendering
             self.showFullScreen()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
             if hasattr(self, 'btn_fullscreen'):
@@ -2048,6 +2058,8 @@ class MainWindow(QMainWindow):
     def _mpv_poll(self):
         """Timer-based polling to replace Qt media player signals."""
         if not hasattr(self, 'player') or self.player is None:
+            return
+        if not getattr(self, 'file_path', None):
             return
         try:
             pos_ms = self._mpv_pos_ms()
