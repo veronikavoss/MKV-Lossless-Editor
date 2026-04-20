@@ -802,7 +802,7 @@ class MainWindow(QMainWindow):
         self.top_panel.setStyleSheet("background-color: rgba(0, 0, 0, 180);")
         self.top_panel.hide()
         self.top_panel_layout = QHBoxLayout(self.top_panel)
-        self.top_panel_layout.setContentsMargins(15, 10, 15, 10)
+        self.top_panel_layout.setContentsMargins(10, 10, 10, 10)
         self.top_title_label = QLabel("")
         self.top_title_label.setStyleSheet("color: white; font-size: 16px; font-weight: bold; background: transparent;")
         self.top_panel_layout.addWidget(self.top_title_label)
@@ -1434,7 +1434,8 @@ class MainWindow(QMainWindow):
         if self._is_true_fullscreen:
             self._is_true_fullscreen = False
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
-            self.layout.setContentsMargins(9, 9, 9, 9)
+            if hasattr(self, '_normal_margins'):
+                self.layout.setContentsMargins(self._normal_margins)
             self.bottom_panel.show()
             self.showNormal()
             self.statusBar().show()
@@ -1481,7 +1482,8 @@ class MainWindow(QMainWindow):
         if self.isFullScreen():
             self._is_true_fullscreen = False
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
-            self.layout.setContentsMargins(9, 9, 9, 9)
+            if hasattr(self, '_normal_margins'):
+                self.layout.setContentsMargins(self._normal_margins)
             self.bottom_panel.show()
             self.top_panel.hide()
             self.showNormal()
@@ -1497,6 +1499,8 @@ class MainWindow(QMainWindow):
             self._is_true_fullscreen = True
             self.central_widget.setObjectName("centralWidget")
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: black; }")
+            if not hasattr(self, '_normal_margins'):
+                self._normal_margins = self.layout.contentsMargins()
             self.layout.setContentsMargins(0, 0, 0, 0)
             self.bottom_panel.hide()
             self.top_panel.hide()
