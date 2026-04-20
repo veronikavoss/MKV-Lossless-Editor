@@ -1357,6 +1357,19 @@ class MainWindow(QMainWindow):
         alt_enter2 = QShortcut(QKeySequence("Alt+Enter"), self)
         alt_enter2.setContext(Qt.ShortcutContext.ApplicationShortcut)
         alt_enter2.activated.connect(self.toggle_true_fullscreen)
+        
+        # Enter key in fullscreen mode returns to normal mode
+        enter_shortcut = QShortcut(QKeySequence("Return"), self)
+        enter_shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        enter_shortcut.activated.connect(self.exit_fullscreen_on_enter)
+        
+        enter2_shortcut = QShortcut(QKeySequence("Enter"), self)
+        enter2_shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        enter2_shortcut.activated.connect(self.exit_fullscreen_on_enter)
+        
+    def exit_fullscreen_on_enter(self):
+        if self._is_true_fullscreen:
+            self.toggle_true_fullscreen()
 
     def eventFilter(self, obj, event):
         if self._is_true_fullscreen and event.type() == QEvent.Type.MouseMove:
@@ -1530,6 +1543,9 @@ class MainWindow(QMainWindow):
             
             self.layout.setContentsMargins(0, 0, 0, 0)
             self.bottom_panel_layout.setContentsMargins(ml, mt, mr, mb)
+            
+            # Message must be set before hiding so it's ready when auto-hiding triggers
+            self.statusBar().showMessage("전체화면 모드")
             
             self.bottom_panel.hide()
             self.top_panel.hide()
@@ -1822,7 +1838,10 @@ class MainWindow(QMainWindow):
         act_sub.triggered.connect(self.toggle_subtitles)
         menu.addSeparator()
 
-        act_full = menu.addAction("전체 화면 (Alt+Enter)")
+        if getattr(self, '_is_true_fullscreen', False):
+            act_full = menu.addAction("기본 화면 (Alt+Enter)")
+        else:
+            act_full = menu.addAction("전체 화면 (Alt+Enter)")
         act_full.triggered.connect(self.toggle_true_fullscreen)
         menu.addSeparator()
 
@@ -1875,10 +1894,9 @@ class MainWindow(QMainWindow):
         self.set_volume(val)
 
     def stop_playback(self):
-        if self.isFullScreen():
-            self.toggle_fullscreen()
-            return
-
+        if getattr(self, '_is_true_fullscreen', False):
+            self.toggle_true_fullscreen()
+            
         self.stop_and_clear()
 
     def set_volume(self, value):
