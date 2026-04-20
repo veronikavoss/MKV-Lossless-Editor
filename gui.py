@@ -1387,6 +1387,7 @@ class MainWindow(QMainWindow):
                 if self.bottom_panel.isHidden() and self._is_true_fullscreen:
                     if y > screen_h * 0.90:
                         self.bottom_panel.show()
+                        self.statusBar().setMaximumHeight(16777215)
                         self.statusBar().show()
                         self.central_widget.updateGeometry()
                         self.update()
@@ -1404,6 +1405,7 @@ class MainWindow(QMainWindow):
                         else:
                             self.bottom_panel.hide()
                             self.statusBar().hide()
+                            self.statusBar().setMaximumHeight(0)
                             self.central_widget.updateGeometry()
                             self.update()
 
@@ -1550,7 +1552,7 @@ class MainWindow(QMainWindow):
             self.bottom_panel.hide()
             self.top_panel.hide()
             self.statusBar().hide()
-            # self.statusBar().setMaximumHeight(0) # Absolutely prevent visible rendering
+            self.statusBar().setMaximumHeight(0) # Absolutely prevent visible rendering
             self.showFullScreen()
             if hasattr(self, 'menubar') and self.menubar: self.menubar.hide()
             if hasattr(self, 'btn_fullscreen'):
