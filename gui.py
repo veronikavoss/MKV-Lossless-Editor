@@ -1436,6 +1436,8 @@ class MainWindow(QMainWindow):
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             if hasattr(self, '_normal_margins'):
                 self.layout.setContentsMargins(self._normal_margins)
+            if hasattr(self, '_normal_bottom_margins'):
+                self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.showNormal()
             self.statusBar().show()
@@ -1484,6 +1486,8 @@ class MainWindow(QMainWindow):
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: transparent; }")
             if hasattr(self, '_normal_margins'):
                 self.layout.setContentsMargins(self._normal_margins)
+            if hasattr(self, '_normal_bottom_margins'):
+                self.bottom_panel_layout.setContentsMargins(self._normal_bottom_margins)
             self.bottom_panel.show()
             self.top_panel.hide()
             self.showNormal()
@@ -1499,9 +1503,21 @@ class MainWindow(QMainWindow):
             self._is_true_fullscreen = True
             self.central_widget.setObjectName("centralWidget")
             self.central_widget.setStyleSheet("QWidget#centralWidget { background-color: black; }")
+            
             if not hasattr(self, '_normal_margins'):
                 self._normal_margins = self.layout.contentsMargins()
+            if not hasattr(self, '_normal_bottom_margins'):
+                self._normal_bottom_margins = self.bottom_panel_layout.contentsMargins()
+                
+            # 전체화면 시 기본 여백만큼을 하단 패널 여백에 합산하여 적용
+            ml = self._normal_margins.left() + self._normal_bottom_margins.left()
+            mt = self._normal_margins.top() + self._normal_bottom_margins.top()
+            mr = self._normal_margins.right() + self._normal_bottom_margins.right()
+            mb = self._normal_margins.bottom() + self._normal_bottom_margins.bottom()
+            
             self.layout.setContentsMargins(0, 0, 0, 0)
+            self.bottom_panel_layout.setContentsMargins(ml, mt, mr, mb)
+            
             self.bottom_panel.hide()
             self.top_panel.hide()
             self.statusBar().hide()
