@@ -1208,13 +1208,18 @@ class MainWindow(QMainWindow):
         
         # StatusBar Override: move inside bottom_panel to prevent QMainWindow gray artifacts
         self.setStatusBar(None)
+        status_separator = QFrame(self.bottom_panel)
+        status_separator.setFrameShape(QFrame.Shape.HLine)
+        status_separator.setFixedHeight(1)
+        status_separator.setStyleSheet("background-color: #555555;")
+        self.bottom_panel_layout.addWidget(status_separator)
         self.custom_status_bar = QStatusBar(self.bottom_panel)
         self.bottom_panel_layout.addWidget(self.custom_status_bar)
         self.statusBar = lambda: self.custom_status_bar
 
         self.statusBar().showMessage("준비 완료")
         self.statusBar().setStyleSheet("color: #cccccc; font-size: 12px;")
-        self.statusBar().setMinimumHeight(28)
+        self.statusBar().setMinimumHeight(20)
 
         self.setup_shortcuts()
         
@@ -1816,8 +1821,84 @@ class MainWindow(QMainWindow):
         act_mute = menu.addAction("음소거 토글 (M)")
         act_mute.triggered.connect(self.toggle_mute)
 
-        act_sub = menu.addAction("자막 보이기 / 끄기")
-        act_sub.triggered.connect(self.toggle_subtitles)
+        sub_menu = QMenu("자막", menu)
+        sub_menu.setWindowFlags(sub_menu.windowFlags() | Qt.WindowType.FramelessWindowHint | Qt.WindowType.NoDropShadowWindowHint)
+        sub_menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        # Inherit styling from parent menu
+        sub_menu.setStyleSheet(menu.styleSheet())
+        
+        # 1. (체크) 자막 보이기
+        current_vis = True
+        try: current_vis = getattr(self.player, 'sub_visibility', True)
+        except: pass
+        
+        act_sub_toggle = sub_menu.addAction("자막 보이기")
+        act_sub_toggle.setCheckable(True)
+        act_sub_toggle.setChecked(bool(current_vis))
+        act_sub_toggle.triggered.connect(self.toggle_subtitles)
+        
+        sub_menu.addSeparator()
+        
+        # Determine subtitle tracks and current sid from MPV
+        sub_tracks = []
+        current_sid = None
+        try:
+            if hasattr(self, 'player') and self.player is not None:
+                current_sid = getattr(self.player, 'sid', None)
+                tracks = getattr(self.player, 'track_list', [])
+                for t in tracks:
+                    if t.get('type') == 'sub':
+                        sub_tracks.append(t)
+        except:
+            pass
+            
+        current_sub_title = "없음"
+        if str(current_sid).isdigit():
+            for t in sub_tracks:
+                if str(t.get('id')) == str(current_sid):
+                    title = t.get('title')
+                    lang = t.get('lang')
+                    if title and lang:
+                        current_sub_title = f"{title} [{lang}]"
+                    elif title:
+                        current_sub_title = title
+                    elif lang:
+                        current_sub_title = f"트랙 {t.get('id')} [{lang}]"
+                    else:
+                        current_sub_title = f"트랙 {t.get('id')}"
+                    break
+        
+        # 3. (체크) 현재 재생중인 자막
+        act_current_sub = sub_menu.addAction(f"현재 재생중인 자막: {current_sub_title}")
+        act_current_sub.setCheckable(True)
+        act_current_sub.setChecked(str(current_sid).isdigit())
+        act_current_sub.setEnabled(False) # Display only
+        
+        sub_menu.addSeparator()
+        
+        # 5. 파일에 내장된 자막 리스트
+        act_sid_none = sub_menu.addAction("사용 안 함")
+        act_sid_none.setCheckable(True)
+        act_sid_none.setChecked(not str(current_sid).isdigit())
+        act_sid_none.triggered.connect(lambda: setattr(self.player, 'sid', 'no'))
+        
+        for t in sub_tracks:
+            tid = t.get('id')
+            title = t.get('title')
+            lang = t.get('lang')
+            
+            label_parts = []
+            if title: label_parts.append(title)
+            if lang: label_parts.append(f"[{lang}]")
+            
+            label = " ".join(label_parts) if label_parts else f"트랙 {tid}"
+            
+            act_t = sub_menu.addAction(label)
+            act_t.setCheckable(True)
+            act_t.setChecked(str(tid) == str(current_sid))
+            act_t.triggered.connect(lambda checked=False, id=tid: setattr(self.player, 'sid', id))
+
+        menu.addMenu(sub_menu)
         menu.addSeparator()
 
         if getattr(self, '_is_true_fullscreen', False):
