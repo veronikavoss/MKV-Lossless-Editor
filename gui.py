@@ -843,7 +843,7 @@ class MainWindow(QMainWindow):
         self.pre_frame_button.setIconSize(QSize(42, 36))
         self.pre_frame_button.setFixedSize(42, 36)
         self.pre_frame_button.setStyleSheet("background-color: transparent; border: none;")
-        self.pre_frame_button.setToolTip("1프레임 뒤로")
+        self.pre_frame_button.setToolTip("1프레임 뒤로 (D)")
         self.pre_frame_button.clicked.connect(self.step_backward)
         self.pre_frame_button.setEnabled(False)
         self.controls_layout.addWidget(self.pre_frame_button)
@@ -855,7 +855,7 @@ class MainWindow(QMainWindow):
         self.rewind_button.setIconSize(QSize(42, 36))
         self.rewind_button.setFixedSize(42, 36)
         self.rewind_button.setStyleSheet("background-color: transparent; border: none;")
-        self.rewind_button.setToolTip("5초 뒤로")
+        self.rewind_button.setToolTip("5초 뒤로 (←)")
         self.rewind_button.clicked.connect(self.skip_backward)
         self.rewind_button.setEnabled(False)
         self.controls_layout.addWidget(self.rewind_button)
@@ -868,7 +868,7 @@ class MainWindow(QMainWindow):
         self.play_button.setIconSize(QSize(42, 36))
         self.play_button.setFixedSize(42, 36)
         self.play_button.setStyleSheet("background-color: transparent; border: none;")
-        self.play_button.setToolTip("재생 / 닫힌 상태에선 열기 창 띄우기")
+        self.play_button.setToolTip("재생 / 닫힌 상태에선 열기 (Space)")
         self.play_button.clicked.connect(self.toggle_play)
         self.play_button.setEnabled(True) # 빈 상태일 때 눌러서 파일 열 수 있게 활성화 유지
         self.controls_layout.addWidget(self.play_button)
@@ -880,7 +880,7 @@ class MainWindow(QMainWindow):
         self.stop_button.setIconSize(QSize(42, 36))
         self.stop_button.setFixedSize(42, 36)
         self.stop_button.setStyleSheet("background-color: transparent; border: none;")
-        self.stop_button.setToolTip("정지 (초기화)")
+        self.stop_button.setToolTip("정지 및 초기화 (Esc)")
         self.stop_button.clicked.connect(self.stop_and_clear)
         self.stop_button.setEnabled(False) # 비활성화 기본값
         self.controls_layout.addWidget(self.stop_button)
@@ -892,7 +892,7 @@ class MainWindow(QMainWindow):
         self.fast_forward_button.setIconSize(QSize(42, 36))
         self.fast_forward_button.setFixedSize(42, 36)
         self.fast_forward_button.setStyleSheet("background-color: transparent; border: none;")
-        self.fast_forward_button.setToolTip("5초 앞으로")
+        self.fast_forward_button.setToolTip("5초 앞으로 (→)")
         self.fast_forward_button.clicked.connect(self.skip_forward)
         self.fast_forward_button.setEnabled(False)
         self.controls_layout.addWidget(self.fast_forward_button)
@@ -904,7 +904,7 @@ class MainWindow(QMainWindow):
         self.next_frame_button.setIconSize(QSize(42, 36))
         self.next_frame_button.setFixedSize(42, 36)
         self.next_frame_button.setStyleSheet("background-color: transparent; border: none;")
-        self.next_frame_button.setToolTip("1프레임 앞으로")
+        self.next_frame_button.setToolTip("1프레임 앞으로 (F)")
         self.next_frame_button.clicked.connect(self.step_forward)
         self.next_frame_button.setEnabled(False)
         self.controls_layout.addWidget(self.next_frame_button)
@@ -916,7 +916,7 @@ class MainWindow(QMainWindow):
         self.open_button.setIconSize(QSize(42, 36))
         self.open_button.setFixedSize(42, 36)
         self.open_button.setStyleSheet("background-color: transparent; border: none;")
-        self.open_button.setToolTip("파일 열기")
+        self.open_button.setToolTip("파일 열기 (Ctrl+O)")
         self.open_button.clicked.connect(self.open_file)
         self.controls_layout.addWidget(self.open_button)
 
@@ -932,7 +932,7 @@ class MainWindow(QMainWindow):
         self.volume_button.setIconSize(QSize(24, 24))
         self.volume_button.setFixedSize(30, 30)
         self.volume_button.setStyleSheet("background-color: transparent; border: none;")
-        self.volume_button.setToolTip("음소거 토글")
+        self.volume_button.setToolTip("음소거 토글 (M)")
         self.volume_button.setProperty("hover_color", "red")
         self.volume_button.clicked.connect(self.toggle_mute)
         self.controls_layout.addWidget(self.volume_button)
@@ -959,7 +959,7 @@ class MainWindow(QMainWindow):
         self.set_start_btn.setIconSize(QSize(42, 36))
         self.set_start_btn.setFixedSize(42, 36)
         self.set_start_btn.setStyleSheet("background-color: transparent; border: none;")
-        self.set_start_btn.setToolTip("시작점 [I]")
+        self.set_start_btn.setToolTip("시작점 ([)")
         self.set_start_btn.setProperty("hover_color", "gold")
         self.set_start_btn.setEnabled(False)
         self.set_start_btn.clicked.connect(self.set_start_mark)
@@ -971,7 +971,7 @@ class MainWindow(QMainWindow):
         self.set_end_btn.setIconSize(QSize(42, 36))
         self.set_end_btn.setFixedSize(42, 36)
         self.set_end_btn.setStyleSheet("background-color: transparent; border: none;")
-        self.set_end_btn.setToolTip("끝점 [O]")
+        self.set_end_btn.setToolTip("끝점 (])")
         self.set_end_btn.setProperty("hover_color", "gold")
         self.set_end_btn.setEnabled(False)
         self.set_end_btn.clicked.connect(self.set_end_mark)
@@ -983,7 +983,7 @@ class MainWindow(QMainWindow):
         self.move_start_point_btn.setIconSize(QSize(42, 36))
         self.move_start_point_btn.setFixedSize(42, 36)
         self.move_start_point_btn.setStyleSheet("background-color: transparent; border: none;")
-        self.move_start_point_btn.setToolTip("시작점으로 이동")
+        self.move_start_point_btn.setToolTip("시작점으로 이동 (,)")
         self.move_start_point_btn.setProperty("hover_color", "gold")
         self.move_start_point_btn.clicked.connect(self.jump_to_start)
         self.move_start_point_btn.setEnabled(False)
@@ -995,7 +995,7 @@ class MainWindow(QMainWindow):
         self.move_end_point_btn.setIconSize(QSize(42, 36))
         self.move_end_point_btn.setFixedSize(42, 36)
         self.move_end_point_btn.setStyleSheet("background-color: transparent; border: none;")
-        self.move_end_point_btn.setToolTip("끝점으로 이동")
+        self.move_end_point_btn.setToolTip("끝점으로 이동 (.)")
         self.move_end_point_btn.setProperty("hover_color", "gold")
         self.move_end_point_btn.clicked.connect(self.jump_to_end)
         self.move_end_point_btn.setEnabled(False)
@@ -1650,6 +1650,7 @@ class MainWindow(QMainWindow):
         # Reset selection
         self.start_time = 0
         self.end_time = 0
+        self._has_start_mark = False
         self.segments = []
         self.slider.set_segments(self.segments)
         self.slider.set_current_selection(-1, -1)
@@ -1785,15 +1786,15 @@ class MainWindow(QMainWindow):
                 background-color: rgba(30, 30, 30, 240);
                 color: #e0e0e0;
                 border: 1px solid #555555;
-                border-radius: 8px;
-                padding: 8px 0px;
+                border-radius: 6px;
+                padding: 4px 0px;
                 font-family: 'Segoe UI', sans-serif;
-                font-size: 14px;
+                font-size: 13px;
             }
             QMenu::item {
-                padding: 8px 36px 8px 24px;
-                margin: 2px 8px;
-                border-radius: 4px;
+                padding: 6px 28px 6px 18px;
+                margin: 1px 6px;
+                border-radius: 3px;
                 background-color: transparent;
             }
             QMenu::item:selected {
@@ -1803,7 +1804,7 @@ class MainWindow(QMainWindow):
             QMenu::separator {
                 height: 1px;
                 background-color: #444444;
-                margin: 6px 16px;
+                margin: 4px 14px;
             }
         """)
 
@@ -1818,8 +1819,71 @@ class MainWindow(QMainWindow):
         act_stop.triggered.connect(self.stop_playback)
         menu.addSeparator()
 
-        act_mute = menu.addAction("음소거 토글 (M)")
-        act_mute.triggered.connect(self.toggle_mute)
+        audio_menu = QMenu("오디오", menu)
+        audio_menu.setWindowFlags(audio_menu.windowFlags() | Qt.WindowType.FramelessWindowHint | Qt.WindowType.NoDropShadowWindowHint)
+        audio_menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        audio_menu.setStyleSheet(menu.styleSheet())
+        
+        current_mute = False
+        try: current_mute = getattr(self.player, 'mute', False)
+        except: pass
+        
+        act_mute_toggle = audio_menu.addAction("음소거")
+        act_mute_toggle.setCheckable(True)
+        act_mute_toggle.setChecked(bool(current_mute))
+        act_mute_toggle.triggered.connect(self.toggle_mute)
+        
+        audio_menu.addSeparator()
+        
+        aud_tracks = []
+        current_aid = None
+        try:
+            if hasattr(self, 'player') and self.player is not None:
+                current_aid = getattr(self.player, 'aid', None)
+                tracks = getattr(self.player, 'track_list', [])
+                for t in tracks:
+                    if t.get('type') == 'audio':
+                        aud_tracks.append(t)
+        except: pass
+        
+        current_aud_title = "없음"
+        if str(current_aid).isdigit():
+            for t in aud_tracks:
+                if str(t.get('id')) == str(current_aid):
+                    title = t.get('title')
+                    lang = t.get('lang')
+                    if title and lang: current_aud_title = f"{title} [{lang}]"
+                    elif title: current_aud_title = title
+                    elif lang: current_aud_title = f"트랙 {t.get('id')} [{lang}]"
+                    else: current_aud_title = f"트랙 {t.get('id')}"
+                    break
+                    
+        act_current_aud = audio_menu.addAction(f"현재 재생중인 오디오: {current_aud_title}")
+        act_current_aud.setCheckable(True)
+        act_current_aud.setChecked(str(current_aid).isdigit())
+        act_current_aud.setEnabled(False)
+        
+        audio_menu.addSeparator()
+        
+        act_aid_none = audio_menu.addAction("사용 안 함")
+        act_aid_none.setCheckable(True)
+        act_aid_none.setChecked(not str(current_aid).isdigit())
+        act_aid_none.triggered.connect(lambda: setattr(self.player, 'aid', 'no'))
+        
+        for t in aud_tracks:
+            tid = t.get('id')
+            title = t.get('title')
+            lang = t.get('lang')
+            label_parts = []
+            if title: label_parts.append(title)
+            if lang: label_parts.append(f"[{lang}]")
+            label = " ".join(label_parts) if label_parts else f"트랙 {tid}"
+            act_t = audio_menu.addAction(label)
+            act_t.setCheckable(True)
+            act_t.setChecked(str(tid) == str(current_aid))
+            act_t.triggered.connect(lambda checked=False, id=tid: setattr(self.player, 'aid', id))
+            
+        menu.addMenu(audio_menu)
 
         sub_menu = QMenu("자막", menu)
         sub_menu.setWindowFlags(sub_menu.windowFlags() | Qt.WindowType.FramelessWindowHint | Qt.WindowType.NoDropShadowWindowHint)
@@ -1908,11 +1972,34 @@ class MainWindow(QMainWindow):
         act_full.triggered.connect(self.toggle_true_fullscreen)
         menu.addSeparator()
 
+        act_shortcuts = menu.addAction("단축키 안내")
+        act_shortcuts.triggered.connect(self.show_shortcuts_guide)
+        menu.addSeparator()
+
         act_exit = menu.addAction("종료 (Esc)")
         act_exit.triggered.connect(self.close)
 
         global_pos = self.video_widget.mapToGlobal(pos)
         menu.exec(global_pos)
+
+    def show_shortcuts_guide(self):
+        msg = QMessageBox(self)
+        msg.setWindowTitle("단축키 안내")
+        msg.setText(
+            "<b>단축키 목록</b><br><br>"
+            "<b>Space</b> : 재생 / 일시정지<br>"
+            "<b>Esc</b> : 정지 / 영상 닫기 / 전체화면 해제<br>"
+            "<b>← / →</b> : 5초 이동<br>"
+            "<b>D / F</b> : 1프레임 이동<br>"
+            "<b>[ / ]</b> : 시작점 / 끝점 설정<br>"
+            "<b>, / .</b> : 시작점 / 끝점으로 이동<br>"
+            "<b>M</b> : 음소거 토글<br>"
+            "<b>위/아래 방향키</b> : 볼륨 조절<br>"
+            "<b>Alt+Enter</b> : 전체화면 전환<br>"
+            "<b>Ctrl+O</b> : 파일 열기<br>"
+        )
+        msg.setStyleSheet("QLabel { color: #e0e0e0; font-size: 13px; } QMessageBox { background-color: #2b2b2b; }")
+        msg.exec()
 
     def toggle_mute(self):
         try:
@@ -1922,18 +2009,10 @@ class MainWindow(QMainWindow):
             is_muted = False
         
         if is_muted:
-            size = QSize(24, 24)
-            pm = self.volume_mute_icon.pixmap(size)
-            painter = QPainter(pm)
-            painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-            painter.fillRect(pm.rect(), QColor("red"))
-            painter.end()
-            red_mute_icon = QIcon(pm)
-            
-            self.volume_button.setIcon(red_mute_icon)
+            self.volume_button.setIcon(self.volume_mute_icon)
             self.volume_button.setProperty("hover_color", "skyblue")
             if hasattr(self.volume_button, "_icon_normal_backup"):
-                self.volume_button._icon_normal_backup = red_mute_icon
+                self.volume_button._icon_normal_backup = self.volume_mute_icon
                 
             self.volume_button.setToolTip("음소거 해제")
             self.statusBar().showMessage("음소거 설정됨")
@@ -2454,6 +2533,7 @@ class MainWindow(QMainWindow):
         if getattr(self, 'is_multi_merge_mode', False): return
         self.start_time = self._mpv_pos_ms()
         self.end_time = 0 # Reset end time for a new segment
+        self._has_start_mark = True
         self.update_segments_list()
         self.slider.set_current_selection(self.start_time, self.end_time)
         self.check_export_ready()
@@ -2461,6 +2541,10 @@ class MainWindow(QMainWindow):
 
     def set_end_mark(self):
         if getattr(self, 'is_multi_merge_mode', False): return
+        if not getattr(self, '_has_start_mark', False):
+             QMessageBox.warning(self, "경고", "끝점은 시작점보다 뒤에 있어야 합니다.")
+             return
+             
         current_pos = self._mpv_pos_ms()
         if current_pos <= self.start_time:
              QMessageBox.warning(self, "경고", "끝점은 시작점보다 뒤에 있어야 합니다.")
@@ -2477,6 +2561,7 @@ class MainWindow(QMainWindow):
         # Reset current selection state so next 'start' can be made cleanly
         self.start_time = 0
         self.end_time = 0
+        self._has_start_mark = False
         self.update_segments_list()
         
         self.check_export_ready()
@@ -2486,6 +2571,7 @@ class MainWindow(QMainWindow):
         self.segments = []
         self.start_time = 0
         self.end_time = 0
+        self._has_start_mark = False
         self.slider.set_segments(self.segments)
         self.slider.set_current_selection(-1, -1)
         self.update_segments_list()
