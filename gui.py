@@ -788,6 +788,9 @@ class MainWindow(QMainWindow):
             input_cursor='no',
             input_default_bindings='no',
             input_vo_keyboard='no',
+            sub_shadow_offset=2,
+            sub_shadow_color='#000000',
+            sub_border_size=2,
         )
         self.player.volume = 100
 
@@ -1891,6 +1894,10 @@ class MainWindow(QMainWindow):
         # Inherit styling from parent menu
         sub_menu.setStyleSheet(menu.styleSheet())
         
+        act_open_sub = sub_menu.addAction("자막 열기...")
+        act_open_sub.triggered.connect(self.open_external_sub)
+        sub_menu.addSeparator()
+        
         # 1. (체크) 자막 보이기
         current_vis = True
         try: current_vis = getattr(self.player, 'sub_visibility', True)
@@ -2000,6 +2007,22 @@ class MainWindow(QMainWindow):
         )
         msg.setStyleSheet("QLabel { color: #e0e0e0; font-size: 13px; } QMessageBox { background-color: #2b2b2b; }")
         msg.exec()
+
+    def open_external_sub(self):
+        if not hasattr(self, 'player') or not self.player: return
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "자막 파일 열기",
+            os.path.dirname(self.file_path) if getattr(self, 'file_path', None) else "",
+            "자막 파일 (*.srt *.ass *.vtt *.smi *.sub);;모든 파일 (*.*)"
+        )
+        if file_path:
+            try:
+                self.player.command('sub-add', file_path)
+                self.statusBar().showMessage(f"외부 자막 적용됨: {os.path.basename(file_path)}")
+                self.player.sub_visibility = True
+            except Exception as e:
+                QMessageBox.warning(self, "자막 열기 실패", f"자막 파일을 적용할 수 없습니다:\n{e}")
 
     def toggle_mute(self):
         try:
