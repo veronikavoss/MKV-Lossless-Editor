@@ -9,3 +9,9 @@ __pycache__/
 *.pyd
 .ipynb_checkpoints/
 /tmp/
+
+# Nuitka Build Artifacts
+*.build/
+*.dist/
+*.exe
+nuitka-crash-report.xml
